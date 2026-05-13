@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+output/
+transactions_data.csv
+users_data.csv
+cards_data.csv
+data/transactions_data.csv
+data/users_data.csv
+data/cards_data.csv

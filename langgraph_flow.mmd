@@ -1,0 +1,9 @@
+flowchart TD
+  A[load_data] --> B[enrich_data]
+  B --> C[compute_spending_kpis]
+  C --> D[detect_fraud_signals]
+  D --> E[score_financial_health]
+  E --> F[segment_users]
+  F --> G[generate_insights]
+  G --> H[finalize]
+  H --> I[END]

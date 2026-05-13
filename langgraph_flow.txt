@@ -1,0 +1,85 @@
+FINTOLO LANGGRAPH FLOW
+======================
+
+Graph Name: Fintolo Financial Intelligence Pipeline
+Engine: LangGraph StateGraph
+Entry Point: load_data
+Exit Point: END
+
+Node Flow
+---------
+1) load_data
+   - Reads datasets:
+     - transactions_data.csv
+     - users_data.csv
+     - cards_data.csv
+   - Parses money/date columns and sampling logic for large transactions file
+
+2) enrich_data
+   - Joins transactions + cards + users using:
+     - client_id
+     - card_id
+   - Adds merchant category labels and year_month feature
+
+3) compute_spending_kpis
+   - Computes core KPIs:
+     - total_spend
+     - total_transactions
+     - avg_transaction
+     - unique_users
+     - unique_cards
+     - chip_usage_pct
+     - top_category
+   - Produces monthly and category aggregates
+
+4) detect_fraud_signals
+   - Flags risky transactions using:
+     - transaction error codes
+     - dark web card exposure
+     - amount outlier detection (z-score)
+
+5) score_financial_health
+   - Computes user-level financial health metrics:
+     - debt-to-income ratio
+     - credit utilization
+     - credit score profile
+
+6) segment_users
+   - Segments customers into:
+     - Healthy
+     - At-Risk
+     - Stressed
+   - Adds age-band distribution
+
+7) generate_insights
+   - Builds CFO-style narrative and executive summary bullets
+   - Consolidates final KPI context for dashboard/chatbot
+
+8) finalize
+   - Packages final pipeline state for consumers (UI/chat/report)
+
+
+Linear Edge Sequence
+--------------------
+load_data
+  -> enrich_data
+  -> compute_spending_kpis
+  -> detect_fraud_signals
+  -> score_financial_health
+  -> segment_users
+  -> generate_insights
+  -> finalize
+  -> END
+
+
+Mermaid-Style Diagram (Text)
+----------------------------
+flowchart TD
+  A[load_data] --> B[enrich_data]
+  B --> C[compute_spending_kpis]
+  C --> D[detect_fraud_signals]
+  D --> E[score_financial_health]
+  E --> F[segment_users]
+  F --> G[generate_insights]
+  G --> H[finalize]
+  H --> I[END]
