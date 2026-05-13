@@ -77,9 +77,13 @@ pip install -r requirements.txt
 python fintolo_ui.py
 ```
 
-Default URL:
+Gradio app link (local):
 
 - `http://127.0.0.1:7860`
+
+Alternate localhost link:
+
+- `http://localhost:7860`
 
 ## Run (Legacy Streamlit UI)
 
