@@ -1,9 +1,30 @@
-flowchart TD
-  A[load_data] --> B[enrich_data]
-  B --> C[compute_spending_kpis]
-  C --> D[detect_fraud_signals]
-  D --> E[score_financial_health]
-  E --> F[segment_users]
-  F --> G[generate_insights]
-  G --> H[finalize]
-  H --> I[END]
+flowchart LR
+  A[load_data_trigger] --> B[fintolo_ai_agent_hub]
+  B --> C[email_report_node]
+  C --> D[fintolo_delivery_node]
+  D --> E[finalize]
+  E --> F[END]
+
+  B --> T1[enrich_data_tool]
+  B --> T2[spending_kpi_tool]
+  B --> T3[fraud_signal_tool]
+  B --> T4[financial_health_tool]
+  B --> T5[segmentation_tool]
+
+  T1 --> C
+  T2 --> C
+  T3 --> C
+  T4 --> C
+  T5 --> C
+
+  classDef start fill:#123d2b,stroke:#5be49b,color:#e9fff4,stroke-width:1px;
+  classDef agent fill:#1f2a44,stroke:#78a6ff,color:#eef4ff,stroke-width:1px;
+  classDef tool fill:#2e2450,stroke:#b49bff,color:#f4f0ff,stroke-width:1px;
+  classDef report fill:#3f2d1a,stroke:#ffbf66,color:#fff6e8,stroke-width:1px;
+  classDef end fill:#3a1d1d,stroke:#ff8b8b,color:#fff1f1,stroke-width:1px;
+
+  class A start;
+  class B agent;
+  class T1,T2,T3,T4,T5 tool;
+  class C,D report;
+  class E,F end;

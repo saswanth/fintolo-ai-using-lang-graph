@@ -3,83 +3,85 @@ FINTOLO LANGGRAPH FLOW
 
 Graph Name: Fintolo Financial Intelligence Pipeline
 Engine: LangGraph StateGraph
-Entry Point: load_data
+Entry Point: load_data_trigger
 Exit Point: END
 
-Node Flow
----------
-1) load_data
-   - Reads datasets:
+Visual Builder Style Flow
+-------------------------
+1) load_data_trigger
+   - Trigger node starts run from uploaded or configured datasets
+   - Inputs:
      - transactions_data.csv
      - users_data.csv
      - cards_data.csv
-   - Parses money/date columns and sampling logic for large transactions file
 
-2) enrich_data
-   - Joins transactions + cards + users using:
-     - client_id
-     - card_id
-   - Adds merchant category labels and year_month feature
+2) fintolo_ai_agent_hub
+   - Central orchestrator node (like the AI Agent node in your reference image)
+   - Calls analysis tools as branches and merges outputs
 
-3) compute_spending_kpis
-   - Computes core KPIs:
-     - total_spend
-     - total_transactions
-     - avg_transaction
-     - unique_users
-     - unique_cards
-     - chip_usage_pct
-     - top_category
-   - Produces monthly and category aggregates
+3) tool_branches attached to agent hub
+   - enrich_data_tool
+     - Joins transactions + cards + users on client_id and card_id
+   - spending_kpi_tool
+     - total_spend, total_transactions, avg_transaction, category and monthly aggregates
+   - fraud_signal_tool
+     - error-based flags, dark-web card exposure, z-score outlier checks
+   - financial_health_tool
+     - debt-to-income, credit utilization, credit score profiling
+   - segmentation_tool
+     - Healthy, At-Risk, Stressed + age-band split
 
-4) detect_fraud_signals
-   - Flags risky transactions using:
-     - transaction error codes
-     - dark web card exposure
-     - amount outlier detection (z-score)
+4) email_report_node
+   - Consolidates tool outputs
+   - Generates executive summary and report payload
 
-5) score_financial_health
-   - Computes user-level financial health metrics:
-     - debt-to-income ratio
-     - credit utilization
-     - credit score profile
+5) fintolo_delivery_node
+   - Sends output to UI panels and chatbot reply channel
+   - Optional artifact/export handoff (markdown, pdf, pptx)
 
-6) segment_users
-   - Segments customers into:
-     - Healthy
-     - At-Risk
-     - Stressed
-   - Adds age-band distribution
-
-7) generate_insights
-   - Builds CFO-style narrative and executive summary bullets
-   - Consolidates final KPI context for dashboard/chatbot
-
-8) finalize
-   - Packages final pipeline state for consumers (UI/chat/report)
+6) finalize
+   - Marks run completed and returns terminal state
 
 
-Linear Edge Sequence
---------------------
-load_data
-  -> enrich_data
-  -> compute_spending_kpis
-  -> detect_fraud_signals
-  -> score_financial_health
-  -> segment_users
-  -> generate_insights
-  -> finalize
-  -> END
+Primary Edge Sequence
+---------------------
+load_data_trigger
+   -> fintolo_ai_agent_hub
+   -> email_report_node
+   -> fintolo_delivery_node
+   -> finalize
+   -> END
+
+Tool Branch Edges (fan-out / fan-in)
+------------------------------------
+fintolo_ai_agent_hub
+   -> enrich_data_tool
+   -> spending_kpi_tool
+   -> fraud_signal_tool
+   -> financial_health_tool
+   -> segmentation_tool
+
+All tools
+   -> email_report_node
 
 
 Mermaid-Style Diagram (Text)
 ----------------------------
 flowchart TD
-  A[load_data] --> B[enrich_data]
-  B --> C[compute_spending_kpis]
-  C --> D[detect_fraud_signals]
-  D --> E[score_financial_health]
-  E --> F[segment_users]
-  F --> G[generate_insights]
-  G --> H[finalize]
-  H --> I[END]
+   A[load_data_trigger] --> B[fintolo_ai_agent_hub]
+   B --> C[email_report_node]
+   C --> D[fintolo_delivery_node]
+   D --> E[finalize]
+   E --> F[END]
+
+   B --> T1[enrich_data_tool]
+   B --> T2[spending_kpi_tool]
+   B --> T3[fraud_signal_tool]
+   B --> T4[financial_health_tool]
+   B --> T5[segmentation_tool]
+
+   T1 --> C
+   T2 --> C
+   T3 --> C
+   T4 --> C
+   T5 --> C
