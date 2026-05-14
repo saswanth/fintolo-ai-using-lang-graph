@@ -200,7 +200,10 @@ def preview_csv(file):
     if file is None:
         return pd.DataFrame()
     try:
-        return pd.read_csv(file.name, nrows=200)
+        file_path = file if isinstance(file, str) else getattr(file, "name", None)
+        if not file_path:
+            return pd.DataFrame({"error": ["Unsupported uploaded file payload."]})
+        return pd.read_csv(file_path, nrows=200)
     except Exception as e:
         return pd.DataFrame({"error": [str(e)]})
 
@@ -305,7 +308,7 @@ def build_app():
             with gr.TabItem("🔍 Data Explorer"):
                 gr.Markdown("### Upload & Preview any CSV (first 200 rows)")
                 with gr.Row():
-                    csv_up   = gr.File(label="Upload CSV", file_types=[".csv"], scale=3)
+                    csv_up   = gr.File(label="Upload CSV", file_types=[".csv"], type="filepath", scale=3)
                     prev_btn = gr.Button("Preview", variant="secondary", scale=1)
                 preview_tbl = gr.Dataframe(
                     label="Preview", interactive=False, wrap=True,
