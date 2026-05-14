@@ -8,6 +8,11 @@ It is designed to act like a Senior Financial Analyst + CFO copilot for monthly 
 
 - Workflow scaffolded on LangGraph using transaction, user, and card datasets
 - New Gradio-based UI with custom dashboard and embedded chatbot
+- Upgraded to section-wise LangGraph pipelines for each UI area:
+	- Dashboard pipeline
+	- Insights pipeline
+	- Chatbot pipeline
+	- Data Explorer pipeline
 - Dedicated LangGraph flow artifacts added:
 	- `langgraph_flow.txt`
 	- `langgraph_flow.mmd`
@@ -16,7 +21,7 @@ It is designed to act like a Senior Financial Analyst + CFO copilot for monthly 
 
 ## Core Features
 
-- LangGraph automation pipeline for financial analysis
+- Section-specific LangGraph automation pipelines for financial analysis
 - KPI computation and executive insight generation
 - Fraud/risk signal detection and user health segmentation
 - Interactive dashboard charts
@@ -45,6 +50,21 @@ The current financial intelligence flow is:
 1. `generate_insights`
 1. `finalize`
 
+### Section pipelines (UI upgrade)
+
+The app now uses separate LangGraph graphs for each major section:
+
+1. Dashboard pipeline
+	- Loads shared base result
+	- Builds dashboard payload (kpis, monthly/category/fraud/user health frames)
+1. Insights pipeline
+	- Reuses shared base result
+	- Builds executive summary and insight bullets
+1. Chatbot pipeline
+	- Handles user query routing and response generation
+1. Data Explorer pipeline
+	- Handles uploaded file preview and CSV parsing
+
 ## Datasets Used
 
 Primary files used by the new flow:
@@ -59,6 +79,7 @@ The UI/pipeline supports sample loading for large transaction volumes via config
 
 - `fintolo_flow.py` - LangGraph financial workflow
 - `src/fintolo_chat.py` - chatbot query handling over pipeline outputs
+- `src/fintolo_section_pipelines.py` - section-wise LangGraph pipelines (dashboard/insights/chatbot/explorer)
 - `fintolo_ui.py` - Gradio web UI
 - `fintolo_app.py` - legacy Streamlit app (kept for compatibility)
 - `src/cfo_agent/` - existing CFO pipeline modules for report/PPTX/PDF/email flows
@@ -76,6 +97,8 @@ pip install -r requirements.txt
 ```bash
 python fintolo_ui.py
 ```
+
+The UI now routes each tab through its dedicated LangGraph pipeline while sharing a common base analysis state.
 
 Gradio app link (local):
 

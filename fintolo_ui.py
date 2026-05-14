@@ -19,8 +19,13 @@ import plotly.graph_objects as go
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 
-from fintolo_flow import run_fintolo_pipeline, FintoloPipelineState
-from src.fintolo_chat import ask_fintolo
+from fintolo_flow import FintoloPipelineState
+from src.fintolo_section_pipelines import (
+    run_chatbot_pipeline,
+    run_dashboard_pipeline,
+    run_data_explorer_pipeline,
+    run_insights_pipeline,
+)
 
 # ─── CSS ─────────────────────────────────────────────────────────
 CSS = """
@@ -106,7 +111,7 @@ def fig_fraud(df: pd.DataFrame) -> go.Figure:
 def fig_age(df: pd.DataFrame) -> go.Figure:
     if "age_band" not in df.columns:
         return go.Figure()
-    grp = df.groupby(["age_band", "health_segment"]).size().reset_index(name="count")
+    grp = df.groupby(["age_band", "health_segment"], observed=False).size().reset_index(name="count")
     cmap = {"Healthy": "#3fb950", "At-Risk": "#d29922", "Stressed": "#f85149"}
     fig = px.bar(grp, x="age_band", y="count", color="health_segment",
                  color_discrete_map=cmap, barmode="stack", title="Health by Age Band")
@@ -145,16 +150,22 @@ def run_pipeline(txn: str, users: str, cards: str, sample: int):
     cards = (cards or "").strip() or "cards_data.csv"
 
     try:
-        r = run_fintolo_pipeline(txn, users, cards, int(sample))
-        with _lock:
-            _result = r
+        dashboard_out = run_dashboard_pipeline(txn, users, cards, int(sample), base_result=None)
+        base_result = dashboard_out.get("base_result")
+        dashboard_payload = dashboard_out.get("dashboard_payload", {})
 
-        k = r.get("kpis", {})
-        monthly_df = r.get("monthly_spend_df", pd.DataFrame())
-        cat_df     = r.get("category_spend_df", pd.DataFrame())
-        segs       = r.get("segments", {})
-        fraud_df   = r.get("fraud_flags_df", pd.DataFrame())
-        health_df  = r.get("user_health_df", pd.DataFrame())
+        insights_out = run_insights_pipeline(txn, users, cards, int(sample), base_result=base_result)
+        insights_payload = insights_out.get("insights_payload", {})
+
+        with _lock:
+            _result = base_result
+
+        k = dashboard_payload.get("kpis", {})
+        monthly_df = dashboard_payload.get("monthly_spend_df", pd.DataFrame())
+        cat_df     = dashboard_payload.get("category_spend_df", pd.DataFrame())
+        segs       = dashboard_payload.get("segments", {})
+        fraud_df   = dashboard_payload.get("fraud_flags_df", pd.DataFrame())
+        health_df  = dashboard_payload.get("user_health_df", pd.DataFrame())
 
         status = (
             f'<span class="ok">✔ Pipeline complete — '
@@ -170,7 +181,7 @@ def run_pipeline(txn: str, users: str, cards: str, sample: int):
             fig_fraud(fraud_df),
             fig_age(health_df)       if not health_df.empty else None,
             fig_credit(health_df)    if not health_df.empty else None,
-            r.get("summary", ""),
+            insights_payload.get("summary", ""),
         )
 
     except Exception as exc:
@@ -189,7 +200,7 @@ def chat_fn(message: str, history: List[Tuple[str, str]]):
     if _result is None:
         reply = "⚠️ Run the pipeline first (Pipeline tab → Run Pipeline)."
     else:
-        reply = ask_fintolo(message, _result, _chat_history)
+        reply = run_chatbot_pipeline(message, _result, _chat_history)
         _chat_history.append({"role": "user", "content": message})
         _chat_history.append({"role": "assistant", "content": reply})
     return "", history + [(message, reply)]
@@ -197,15 +208,7 @@ def chat_fn(message: str, history: List[Tuple[str, str]]):
 
 # ─── CSV preview ─────────────────────────────────────────────────
 def preview_csv(file):
-    if file is None:
-        return pd.DataFrame()
-    try:
-        file_path = file if isinstance(file, str) else getattr(file, "name", None)
-        if not file_path:
-            return pd.DataFrame({"error": ["Unsupported uploaded file payload."]})
-        return pd.read_csv(file_path, nrows=200)
-    except Exception as e:
-        return pd.DataFrame({"error": [str(e)]})
+    return run_data_explorer_pipeline(file)
 
 
 # ─── Build UI ────────────────────────────────────────────────────
